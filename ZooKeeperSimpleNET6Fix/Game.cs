@@ -14,6 +14,8 @@ namespace ZooManager
 
         static public List<List<Zone>> animalZones = new List<List<Zone>>();
         static public Zone holdingPen = new Zone(-1, -1, null);
+        static public List<List<Animal>> activationList = new List<List<Animal>>();
+        static public List<Animal> deadAnimal = new List<Animal>();
 
         static public void SetUpGame()
         {
@@ -23,6 +25,12 @@ namespace ZooManager
                 // Note one-line variation of for loop below!
                 for (var x = 0; x < numCellsX; x++) rowList.Add(new Zone(x, y, null));
                 animalZones.Add(rowList);
+            }
+
+            for (var i = 0; i < 10; i++)
+            {
+                activationList.Add(new List<Animal>());//list of List<Animal> with 10 different reaction time
+                Console.WriteLine(activationList);
             }
         }
 
@@ -92,26 +100,30 @@ namespace ZooManager
             if (holdingPen.occupant != null) return;
             if (animalType == "cat") holdingPen.occupant = new Cat("Fluffy");
             if (animalType == "mouse") holdingPen.occupant = new Mouse("Squeaky");
+            int r = holdingPen.occupant.reactionTime - 1;
+            Console.WriteLine(holdingPen.occupant.reactionTime);
+            activationList[r].Add(holdingPen.occupant);
+            Console.WriteLine(holdingPen.occupant.emoji + "added to list" + r);
             Console.WriteLine($"Holding pen occupant at {holdingPen.occupant.location.x},{holdingPen.occupant.location.y}");
             ActivateAnimals();
         }
 
         static public void ActivateAnimals()
         {
-            for (var r = 1; r < 11; r++) // reaction times from 1 to 10
+            for (var r = 0; r < 10; r++)
             {
-                for (var y = 0; y < numCellsY; y++)
+                foreach (Animal a in activationList[r])
                 {
-                    for (var x = 0; x < numCellsX; x++)
-                    {
-                        var zone = animalZones[y][x];
-                        if (zone.occupant != null && zone.occupant.reactionTime == r)
-                        {
-                            zone.occupant.Activate();
-                        }
-                    }
+                    a.Activate();
+                }
+
+                foreach (Animal b in deadAnimal)
+                {
+                    activationList[b.reactionTime-1].Remove(b);
                 }
             }
+
+
         }
 
         static public bool Seek(int x, int y, Direction d, string target)
@@ -155,18 +167,22 @@ namespace ZooManager
             switch (d)
             {
                 case Direction.up:
+                    deadAnimal.Add(animalZones[y-1][x].occupant);
                     animalZones[y - 1][x].occupant = attacker;
                     break;
                 case Direction.down:
+                    deadAnimal.Add(animalZones[y + 1][x].occupant);
                     animalZones[y + 1][x].occupant = attacker;
                     break;
                 case Direction.left:
+                    deadAnimal.Add(animalZones[y][x - 1].occupant);
                     animalZones[y][x - 1].occupant = attacker;
                     break;
                 case Direction.right:
+                    deadAnimal.Add(animalZones[y][x + 1].occupant);
                     animalZones[y][x + 1].occupant = attacker;
                     break;
-            }
+            }            
             animalZones[y][x].occupant = null;
         }
 
